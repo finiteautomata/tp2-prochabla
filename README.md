@@ -1,2 +1,5 @@
-# tp2-prochabla
-TP2 de Procesamiento del Habla
+# Como correr comandos
+
+```
+TELEGRAM_TOKEN=<token> python programa.py
+```
