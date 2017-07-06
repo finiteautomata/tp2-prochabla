@@ -1,11 +1,18 @@
-# Como correr comandos
+# EstoyBien - Telegram Chatbot
+
+## Instrucciones
+
+1. Renombrar `config/development.conf.sample` por `config/development.conf` y poner claves
+
+2. Correr
 
 ```
-TELEGRAM_TOKEN=<token> python programa.py
-
+python bin/main.py
 ```
 
-#Para correr sphinx, pararse en la carpeta de sphinx y correr el siguiente comando (o actualizar el path de los parametros -dict y -lm)
+## Sphinx
+
+Para correr sphinx, pararse en la carpeta de sphinx y correr el siguiente comando (o actualizar el path de los parametros -dict y -lm)
 
 ```
 
@@ -14,7 +21,7 @@ pocketsphinx_continuous -hmm /home/damifur/Facultad/procesamiento_del_habla/TP2/
 ```
 
 
-# Ejemplos
+## Correr Ejemplos
 
 ```
 $ python ejemplos/tts.py
