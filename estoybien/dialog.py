@@ -6,7 +6,7 @@ from . import utils
 class Dialog(object):
     u"""Clase que implementa el diálogo con una persona."""
 
-    def __init__(self, user, tts):
+    def __init__(self, user, tts, stt):
         u"""Constructor.
 
         Parámetros
@@ -19,6 +19,7 @@ class Dialog(object):
         """
         self.user = user
         self._tts = tts
+        self._stt = stt
 
     def start(self, bot, update):
         u"""Comienza la conversación con el usuario.
@@ -41,4 +42,7 @@ class Dialog(object):
 
         print("Archivo guardado en {}".format(wav_file.name))
 
-        bot.send_message(chat_id=update.message.chat_id, text="Recibí audio")
+        stt_results = self._stt.recognize(wav_file)
+        alternatives = stt_results["results"][0]["alternatives"]
+
+        bot.send_message(chat_id=update.message.chat_id, text=alternatives[0]["transcript"])

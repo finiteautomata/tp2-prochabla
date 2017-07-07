@@ -17,6 +17,8 @@ if __name__ == '__main__':
         telegram_token=config.get('TELEGRAM', 'app_token'),
         tts_user=config.get('WATSON', 'tts_user'),
         tts_pass=config.get('WATSON', 'tts_pass'),
+        stt_user=config.get('WATSON', 'stt_user'),
+        stt_pass=config.get('WATSON', 'stt_pass'),
     )
 
     bot.start()

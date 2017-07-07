@@ -17,4 +17,7 @@ def save_to_wav(bot, update):
     # Luego la convierto a .wav
     AudioSegment.from_file(temp_file.name).export(wav_file, format="wav")
 
+    # "Actualizo"
+    wav_file.seek(0)
+
     return wav_file
