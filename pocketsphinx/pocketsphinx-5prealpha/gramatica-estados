@@ -1,0 +1,5 @@
+#JSGF V1.0;
+grammar isolated_phrases;
+<s_bien> = manzana | banana | pera | sandia;
+<s_mal> = limon | naranja | melon | uva;
+public <grammar> = <s_bien> | <s_mal>;
