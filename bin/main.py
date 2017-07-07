@@ -13,6 +13,10 @@ config.read("config/development.conf")
 
 if __name__ == '__main__':
 
-    bot = estoybien.ChatBot(config.get('TELEGRAM', 'app_token'))
+    bot = estoybien.ChatBot(
+        telegram_token=config.get('TELEGRAM', 'app_token'),
+        tts_user=config.get('WATSON', 'tts_user'),
+        tts_pass=config.get('WATSON', 'tts_pass'),
+    )
 
     bot.start()

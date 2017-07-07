@@ -3,14 +3,14 @@
 from telegram.ext import Updater, CommandHandler
 from telegram.ext import MessageHandler, Filters
 from telegram import Bot
-
+from .tts import TTS
 from .dialog import Dialog
 
 
 class ChatBot(object):
     """Clase para el ChatBot de EstoyBien."""
 
-    def __init__(self, token):
+    def __init__(self, telegram_token, tts_user, tts_pass):
         u"""Constructor.
 
         Parámetros
@@ -20,8 +20,13 @@ class ChatBot(object):
 
             Token para el Telegram Chatbot
         """
-        self._bot = Bot(token=token)
-        self._updater = Updater(token=token)
+        self._bot = Bot(token=telegram_token)
+        self._updater = Updater(token=telegram_token)
+        self._tts = TTS(
+            username=tts_user,
+            password=tts_pass,
+        )
+
         print("Inicializando bot...")
         print(self._bot.get_me())
 
@@ -73,6 +78,6 @@ class ChatBot(object):
         Si no existe, lo crea
         """
         if user not in self._dialogs:
-            self._dialogs[user] = Dialog(user)
+            self._dialogs[user] = Dialog(user, self._tts)
 
         return self._dialogs[user]

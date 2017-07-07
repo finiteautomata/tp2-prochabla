@@ -7,7 +7,7 @@ from pydub import AudioSegment
 class Dialog(object):
     u"""Clase que implementa el diálogo con una persona."""
 
-    def __init__(self, user):
+    def __init__(self, user, tts):
         u"""Constructor.
 
         Parámetros
@@ -15,8 +15,11 @@ class Dialog(object):
 
         user: telegram.ext.User
             Usuario con el que estamos dialogando
+        tts: TextToSpeech service
+            Objeto usado para sintetizar habla
         """
         self.user = user
+        self._tts = tts
 
     def start(self, bot, update):
         u"""Comienza la conversación con el usuario.
@@ -24,15 +27,17 @@ class Dialog(object):
         Este método es llamado cuando el usuario ejecuta /start
         """
         name = self.user.name
+        msg = u"Hola {}, soy el chatbot de EstoyBien ¡Espero poder ayudarte!".format(name)
+        audio_file = self._tts.synthesize(msg)
 
-        msg = u"Hola {}, soy el chatbot de EstoyBien".format(name)
-
-        bot.send_message(chat_id=update.message.chat_id, text=msg)
+        bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
 
     def text_received(self, bot, update):
+        u"""Acción a realizar al recibir un texto."""
         bot.send_message(chat_id=update.message.chat_id, text=update.message.text)
 
     def voice_received(self, bot, update):
+        u"""Acción a realizar al recibir un archivo de voz."""
         wav_file = self._save_to_wav(bot, update)
 
         print("Archivo guardado en {}".format(wav_file.name))

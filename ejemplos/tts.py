@@ -10,8 +10,8 @@ config.optionxform = str
 config.read("config/development.conf")
 
 tts = TextToSpeechV1(
-    username=config.get('WATSON_KEYS', 'username'),
-    password=config.get('WATSON_KEYS', 'password')
+    username=config.get('WATSON_KEYS', 'tts_user'),
+    password=config.get('WATSON_KEYS', 'tts_pass')
 )
 
 w = tts.synthesize("Hola a todos", voice="es-LA_SofiaVoice", accept="audio/wav")
