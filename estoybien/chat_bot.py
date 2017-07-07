@@ -1,10 +1,10 @@
 #! coding: utf-8
 """Clase para el ChatBot de EstoyBien."""
-from tempfile import NamedTemporaryFile
-from pydub import AudioSegment
 from telegram.ext import Updater, CommandHandler
 from telegram.ext import MessageHandler, Filters
 from telegram import Bot
+
+from .dialog import Dialog
 
 
 class ChatBot(object):
@@ -25,6 +25,8 @@ class ChatBot(object):
         print("Inicializando bot...")
         print(self._bot.get_me())
 
+        self._dialogs = {}
+
     def start(self):
         u"""Arranca el chatbot."""
         dispatcher = self._updater.dispatcher
@@ -43,32 +45,34 @@ class ChatBot(object):
 
     def _start_received(self, bot, update):
         """Handler de start"""
-        import ipdb; ipdb.set_trace()
-        bot.send_message(chat_id=update.message.chat_id, text="Hola! Soy el Chat de EstoyBien")
+        user = update.effective_user
+
+        dialog = self.get_dialog(user)
+
+        dialog.start(bot, update)
 
     def _text_received(self, bot, update):
         """Handler para mensajes."""
-        bot.send_message(chat_id=update.message.chat_id, text=update.message.text)
+        user = update.effective_user
+
+        dialog = self.get_dialog(user)
+
+        dialog.text_received(bot, update)
 
     def _voice_received(self, bot, update):
         """Handler para mensajes recibidos de voz."""
-        wav_file = self._save_to_wav(update)
+        user = update.effective_user
 
-        print("Archivo guardado en {}".format(wav_file.name))
+        dialog = self.get_dialog(user)
 
-        bot.send_message(chat_id=update.message.chat_id, text="Recibí audio")
+        dialog.voice_received(bot, update)
 
-    def _save_to_wav(self, update):
-        """Salva update de audio en un .wav."""
-        file_id = update.message.voice.file_id
-        ext = update.message.voice.mime_type.split("/")[-1]
-        temp_file = NamedTemporaryFile(suffix=".{}".format(ext), delete=False)
-        wav_file = NamedTemporaryFile(suffix=".wav", delete=False)
+    def get_dialog(self, user):
+        """Devuelve Dialog del usuario.
 
-        # Primero la guardo en el formato que venga
-        voice_file = self._bot.get_file(file_id)
-        voice_file.download(temp_file.name)
-        # Luego la convierto a .wav
-        AudioSegment.from_file(temp_file.name).export(wav_file, format="wav")
+        Si no existe, lo crea
+        """
+        if user not in self._dialogs:
+            self._dialogs[user] = Dialog(user)
 
-        return wav_file
+        return self._dialogs[user]
