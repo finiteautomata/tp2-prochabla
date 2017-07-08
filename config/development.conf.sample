@@ -1,3 +1,7 @@
-[WATSON_KEYS]
-username =
-password =
+[WATSON]
+tts_user =
+tts_pass =
+stt_user =
+stt_pass =
+[TELEGRAM]
+app_token=

@@ -6,12 +6,14 @@ import ConfigParser
 sys.path.append(os.path.abspath("."))
 import estoybien
 
-config = ConfigParser.ConfigParser()
-config.optionxform = str
-config.read("config/development.conf")
-
 
 if __name__ == '__main__':
+    config_path = os.getenv("EB_CONFIG", "config/development.conf")
+
+    config = ConfigParser.ConfigParser()
+    config.optionxform = str
+    config.read(config_path)
+    print("Leyendo configuración de {}".format(config_path))
 
     bot = estoybien.ChatBot(
         telegram_token=config.get('TELEGRAM', 'app_token'),

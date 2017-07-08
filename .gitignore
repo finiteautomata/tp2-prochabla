@@ -1,7 +1,6 @@
 # Claves!
 
-development.conf
-
+config/*.conf
 
 # Nuestros
 .python-version
