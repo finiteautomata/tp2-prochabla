@@ -1,6 +1,7 @@
 #! coding: utf-8
 u"""Clase que implementa el diálogo con una persona."""
 from . import utils
+from watson_developer_cloud import WatsonException
 
 
 class Dialog(object):
@@ -27,14 +28,19 @@ class Dialog(object):
         Este método es llamado cuando el usuario ejecuta /start
         """
         name = self.user.name
-        msg = u"Hola {}, soy el chatbot de EstoyBien ¡Espero poder ayudarte!".format(name)
+        msg = u"Hola {}, soy el chatbot de EstoyBien ¡Espero poder ayudarte!"
+        msg = msg.format(name)
+
         audio_file = self._tts.synthesize(msg)
 
         bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
 
     def text_received(self, bot, update):
         u"""Acción a realizar al recibir un texto."""
-        bot.send_message(chat_id=update.message.chat_id, text=update.message.text)
+        bot.send_message(
+            chat_id=update.message.chat_id,
+            text=update.message.text
+        )
 
     def voice_received(self, bot, update):
         u"""Acción a realizar al recibir un archivo de voz."""
@@ -42,7 +48,19 @@ class Dialog(object):
 
         print("Archivo guardado en {}".format(wav_file.name))
 
-        stt_results = self._stt.recognize(wav_file)
-        alternatives = stt_results["results"][0]["alternatives"]
+        try:
+            stt_results = self._stt.recognize(
+                wav_file,
+                keywords=["bien", "mal", "estoy"],
+                keywords_threshold=0.5
+            )
 
-        bot.send_message(chat_id=update.message.chat_id, text=alternatives[0]["transcript"])
+            print(stt_results)
+            alternatives = stt_results["results"][0]["alternatives"]
+
+            bot.send_message(
+                chat_id=update.message.chat_id,
+                text=alternatives[0]["transcript"]
+            )
+        except WatsonException as e:
+            print(e)
