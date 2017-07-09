@@ -20,11 +20,11 @@ class STT(object):
         """
         self._stt = SpeechToTextV1(username=username, password=password)
 
-    def recognize(self, audio_file, alternatives=1):
+    def recognize(self, audio_file, alternatives=1, **kwargs):
         u"""Aplica ASR al audio_file"""
         return self._stt.recognize(
             audio_file,
             content_type="audio/wav",
             model="es-ES_BroadbandModel",
             max_alternatives=str(alternatives),
-            continuous="true")
+            **kwargs)
