@@ -54,7 +54,7 @@ class Dialog(object):
 
     def take_notice(self, bot, update, time):
         
-        if self.state < 2:
+        if self.state != 2:
             print("proper error handle soon")
             return
         
@@ -64,6 +64,7 @@ class Dialog(object):
             print("another proper error handling soon")
             return
 
+        self.state = 3
         try:
             t = threading.Thread(target=self.ask, args=(time[0], bot, update))
             t.start()
@@ -77,6 +78,7 @@ class Dialog(object):
         audio_file = self._tts.synthesize(msg)
         bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
 
+        self.state = 4
         print("pregunta enviada. Lo que seguiria es cambiar a un proximo estado indicando que quiero y espero un audio con la clave y algo que chequee si respondo en x tiempo")
         return
 
@@ -89,23 +91,25 @@ class Dialog(object):
 
     def voice_received(self, bot, update):
         u"""Acción a realizar al recibir un archivo de voz."""
-        wav_file = utils.save_to_wav(bot, update)
+        
+        if self.state == 4:
+            wav_file = utils.save_to_wav(bot, update)
+            print("Archivo guardado en {}".format(wav_file.name))
+            try:
+                stt_results = self._stt.recognize(
+                    wav_file,
+                    keywords=[self.key],
+                    keywords_threshold=0.5
+                )
+                print(stt_results)
+                alternatives = stt_results["results"][0]["alternatives"]
 
-        print("Archivo guardado en {}".format(wav_file.name))
+                bot.send_message(
+                    chat_id=update.message.chat_id,
+                    text=alternatives[0]["transcript"]
+                )
 
-        try:
-            stt_results = self._stt.recognize(
-                wav_file,
-                keywords=["bien", "mal", "estoy"],
-                keywords_threshold=0.5
-            )
-
-            print(stt_results)
-            alternatives = stt_results["results"][0]["alternatives"]
-
-            bot.send_message(
-                chat_id=update.message.chat_id,
-                text=alternatives[0]["transcript"]
-            )
-        except WatsonException as e:
-            print(e)
+            except WatsonException as e:
+                print(e)
+        else:
+            print("No me importa el audio por ahora")
