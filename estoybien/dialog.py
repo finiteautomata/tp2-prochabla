@@ -3,8 +3,8 @@ u"""Clase que implementa el diálogo con una persona."""
 import utils
 import time
 import threading
-import goless
 from watson_developer_cloud import WatsonException
+
 
 class Dialog(object):
     u"""Clase que implementa el diálogo con una persona."""
@@ -35,15 +35,16 @@ class Dialog(object):
         name = self.user.name
         msg = u"Hola {}, soy el chatbot de EstoyBien ¡Espero poder ayudarte! Por favor indica una clave.".format(name)
         audio_file = self._tts.synthesize(msg)
-        self.state = 1 #TODO: usar enum
+        self.state = 1
 
         bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
 
     def key_received(self, bot, update, keys):
+        u"""Método recibido cuando me llega un /key"""
         if self.state < 1:
             print("add an error handle here")
             return
-        
+
         key = " ".join(keys)
 
         self.key = key
@@ -53,17 +54,16 @@ class Dialog(object):
         msg = u"Gracias. Tu clave fue guardada exitosamente. Avisame si querés que te pregunte si estás bien."
         audio_file = self._tts.synthesize(msg)
         bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
-    
 
     def take_notice(self, bot, update, time):
-        
+        """/pregun recibido"""
         if self.state != 2:
             bot.send_message(
                 chat_id=update.message.chat_id,
                 text="Setea una clave primero si no lo hiciste o esperá a que te pregunte la primera vez antes de pedirme una pregunta de nuevo"
             )
             return
-        
+
         # Validador
         try:
             int(time[0])
@@ -80,16 +80,17 @@ class Dialog(object):
             t.start()
         except Exception, e:
             print(e)
-        
+
 
     def ask(self, secs, bot, update):
+        u"""Método llamado cuando se pregunta si está bien."""
         time.sleep(float(secs))
-        msg = u"Te encuentras bien?"
+        msg = u"¿Te encuentras bien?"
         audio_file = self._tts.synthesize(msg)
         bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
 
         self.state = 4
-       
+
         self.event.clear()
         t = threading.Thread(target=self.wait_five, args=(self.current_question,))
         t.start()
@@ -129,7 +130,7 @@ class Dialog(object):
 
     def voice_received(self, bot, update):
         u"""Acción a realizar al recibir un archivo de voz."""
-        
+
         if self.state == 4:
             wav_file = utils.save_to_wav(bot, update)
             print("Archivo guardado en {}".format(wav_file.name))
@@ -159,4 +160,4 @@ class Dialog(object):
                 text="No estaba esperando ningún audio por el momento, pero gracias por hablarme!"
             )
             return
-            
+
