@@ -3,9 +3,9 @@
 from telegram.ext import Updater, CommandHandler
 from telegram.ext import MessageHandler, Filters
 from telegram import Bot
-from .tts import TTS
-from .stt import STT
-from .dialog import Dialog
+from tts import TTS
+from stt import STT
+from dialog import Dialog
 
 
 class ChatBot(object):
@@ -48,10 +48,14 @@ class ChatBot(object):
         dispatcher = self._updater.dispatcher
 
         start_handler = CommandHandler('start', self._start_received)
+        key_handler = CommandHandler('key', self._key_received, pass_args=True)
+        pregun_handler = CommandHandler('pregun', self._pregun_received, pass_args=True)
         echo_handler = MessageHandler(Filters.text, self._text_received)
         voice_handler = MessageHandler(Filters.voice, self._voice_received)
 
         dispatcher.add_handler(start_handler)
+        dispatcher.add_handler(key_handler)
+        dispatcher.add_handler(pregun_handler)
         dispatcher.add_handler(echo_handler)
         dispatcher.add_handler(voice_handler)
 
@@ -66,6 +70,22 @@ class ChatBot(object):
         dialog = self.get_dialog(user)
 
         dialog.start(bot, update)
+
+    def _key_received(self, bot, update, args):
+        """Handler para recibir claves"""
+        user = update.effective_user
+
+        dialog = self.get_dialog(user)
+
+        dialog.key_received(bot, update, args) 
+
+    def _pregun_received(self, bot, update, args):
+        """Handler para que te pregunten si estas bien"""
+        user = update.effective_user
+
+        dialog = self.get_dialog(user)
+
+        dialog.take_notice(bot, update, args)
 
     def _text_received(self, bot, update):
         """Handler para mensajes."""

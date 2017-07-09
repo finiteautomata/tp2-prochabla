@@ -1,2 +1,2 @@
 """Entrypoint."""
-from .chat_bot import ChatBot
+from chat_bot import ChatBot
