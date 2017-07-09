@@ -3,6 +3,7 @@ u"""Clase que implementa el diálogo con una persona."""
 import utils
 import time
 import threading
+import goless
 from watson_developer_cloud import WatsonException
 
 class Dialog(object):
@@ -22,6 +23,8 @@ class Dialog(object):
         self.user = user
         self._tts = tts
         self._stt = stt
+        self.event = threading.Event()
+        self.current_question = 0
         self.state = 0
 
     def start(self, bot, update):
@@ -55,13 +58,20 @@ class Dialog(object):
     def take_notice(self, bot, update, time):
         
         if self.state != 2:
-            print("proper error handle soon")
+            bot.send_message(
+                chat_id=update.message.chat_id,
+                text="Setea una clave primero si no lo hiciste o esperá a que te pregunte la primera vez antes de pedirme una pregunta de nuevo"
+            )
             return
         
+        # Validador
         try:
             int(time[0])
         except ValueError:
-            print("another proper error handling soon")
+            bot.send_message(
+                chat_id=update.message.chat_id,
+                text="Necesito un tiempo con valor numerico para saber en cuanto tiempo preguntarte"
+            )
             return
 
         self.state = 3
@@ -79,7 +89,35 @@ class Dialog(object):
         bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
 
         self.state = 4
-        print("pregunta enviada. Lo que seguiria es cambiar a un proximo estado indicando que quiero y espero un audio con la clave y algo que chequee si respondo en x tiempo")
+       
+        self.event.clear()
+        t = threading.Thread(target=self.wait_five, args=(self.current_question,))
+        t.start()
+        self.event.wait()
+        if self.state != 2:
+            bot.send_message(
+                chat_id=update.message.chat_id,
+                text="Estamos llamando a la policía ya mismo. Cuando terminen de comer la pizza seguro ya van a comprar un helado y después seguro estan en camino para ayudarte... ponele"
+            )
+        else:
+            bot.send_message(
+                chat_id=update.message.chat_id,
+                text="Gracias por confirmarmos que estás bien"
+            )
+            self.current_question += 1
+            print(self.current_question)
+        return
+
+    def wait_five(self, current):
+        print("estoy en wait")
+        time.sleep(60)
+        if current == self.current_question:
+            print("wait activo")
+            self.event.set()
+        else:
+            print("wait no activo")
+            print(current)
+            print(self.current_question)
         return
 
     def text_received(self, bot, update):
@@ -104,12 +142,21 @@ class Dialog(object):
                 print(stt_results)
                 alternatives = stt_results["results"][0]["alternatives"]
 
-                bot.send_message(
-                    chat_id=update.message.chat_id,
-                    text=alternatives[0]["transcript"]
-                )
+                if alternatives[0]["transcript"].rstrip() == self.key:
+                    self.event.set()
+                    self.state = 2
+                else:
+                    bot.send_message(
+                        chat_id=update.message.chat_id,
+                        text="No reconocimos tu clave, por favor mandala de nuevo"
+                    )
 
             except WatsonException as e:
                 print(e)
         else:
-            print("No me importa el audio por ahora")
+            bot.send_message(
+                chat_id=update.message.chat_id,
+                text="No estaba esperando ningún audio por el momento, pero gracias por hablarme!"
+            )
+            return
+            
