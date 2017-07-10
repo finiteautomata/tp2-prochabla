@@ -76,24 +76,23 @@ class Dialog(object):
         self.state = DialogState.READY
 
         msg = u"Gracias. Tu clave fue guardada exitosamente."\
-              u" Usa el comando /pregun para ver si estás bien"
+              u" Usa el comando /pregun o envía un audio"\
+              u" para que te preguntemos si estás bien"
 
         self.send_message(bot, update, msg)
 
     def take_notice(self, bot, update, time):
         """/pregun recibido"""
         if self.state == DialogState.BEGIN or self.state == DialogState.KEY_PROMPT:
-            bot.send_message(
-                chat_id=update.message.chat_id,
-                text=u"Setea una clave primero si no lo hiciste o esperá a"\
-                     u" que te pregunte la primera vez"
+            self.send_message(bot, update,
+                u"Setea una clave primero si no lo hiciste o esperá a"\
+                u" que te pregunte la primera vez"
             )
             return
         elif self.state != DialogState.READY:
-            bot.send_message(
-                chat_id=update.message.chat_id,
-                text=u"Hay un pedido en espera. Debe finalizar dicho pedido"\
-                     u" para realizar otro"
+            self.send_message(bot, update,
+                u"Hay un pedido en espera. Debe finalizar dicho pedido"\
+                u" para realizar otro"
             )
             return
 
@@ -103,10 +102,9 @@ class Dialog(object):
 
             self._launch_ask(secs, bot, update)
         except ValueError:
-            bot.send_message(
-                chat_id=update.message.chat_id,
-                text="Necesito un tiempo con valor numerico para saber en"\
-                     " cuanto tiempo preguntarte"
+            self.send_message(bot, update,
+                u"Necesito un tiempo con valor numerico para saber en"\
+                u" cuanto tiempo preguntarte"
             )
         except Exception, e:
             print(e)
@@ -123,22 +121,20 @@ class Dialog(object):
         m, r = divmod(r, 60)
         s = r
 
-        msg = "Te preguntaremos en {} horas, {} minutos y {} segundos cómo estás".format(
-            h,
-            m,
-            s
+        msg = "Te preguntaremos en {} {} {} cómo estás".format(
+            "" if h==0 else "{} horas".format(h),
+            "" if m==0 else "{} minutos".format(m),
+            "" if s==0 else "{} segundos".format(s),
         )
-        audio_file = self._tts.synthesize(msg)
-        bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
+
+        self.send_message(bot, update, msg)
 
         time.sleep(float(secs))
-        msg = u"Hola {} ¿Te encuentras bien? Por favor dinos tu clave"
+        msg = u"Hola {}. Decinos si estás bien. Por favor, mandá tu clave"
 
         msg = msg.format(self.user.first_name)
 
-        audio_file = self._tts.synthesize(msg)
-        bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
-
+        self.send_message(bot, update, msg)
         self.state = DialogState.WAITING_ANSWER
 
         self.event.clear()
@@ -169,12 +165,7 @@ class Dialog(object):
         print("estoy en wait")
         time.sleep(60)
         if current == self.current_question:
-            print("wait activo")
             self.event.set()
-        else:
-            print("wait no activo")
-            print(current)
-            print(self.current_question)
         return
 
     def text_received(self, bot, update):
@@ -214,10 +205,9 @@ class Dialog(object):
                 self.event.set()
                 self.state = DialogState.READY
             else:
-                bot.send_message(
-                    chat_id=update.message.chat_id,
-                    text="No reconocimos tu clave, por favor"\
-                         " mandala de nuevo"
+                self.send_message(bot, update,
+                    "No reconocimos tu clave, por favor"\
+                    " mandala de nuevo"
                 )
 
         except WatsonException as e:
