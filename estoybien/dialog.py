@@ -76,28 +76,29 @@ class Dialog(object):
             bot.send_message(
                 chat_id=update.message.chat_id,
                 text=u"Setea una clave primero si no lo hiciste o esperá a"\
-                     u" que te pregunte la primera vez antes de pedirme una"\
-                     u" pregunta de nuevo"
+                     u" que te pregunte la primera vez"
             )
             return
 
         # Validador
         try:
-            int(time[0])
+            secs = time[0]
+
+            self._launch_ask(secs, bot, update)
         except ValueError:
             bot.send_message(
                 chat_id=update.message.chat_id,
                 text="Necesito un tiempo con valor numerico para saber en"\
                      " cuanto tiempo preguntarte"
             )
-            return
-
-        self.state = DialogState.ON_HOLD
-        try:
-            t = threading.Thread(target=self.ask, args=(time[0], bot, update))
-            t.start()
         except Exception, e:
             print(e)
+
+    def _launch_ask(self, secs, bot, update):
+        t = threading.Thread(target=self.ask, args=(secs, bot, update))
+        t.start()
+        self.state = DialogState.ON_HOLD
+
 
     def ask(self, secs, bot, update):
         u"""Método llamado cuando se pregunta si está bien."""
@@ -156,29 +157,13 @@ class Dialog(object):
 
     def voice_received(self, bot, update):
         u"""Acción a realizar al recibir un archivo de voz."""
+        wav_file = utils.save_to_wav(bot, update)
+        print("Archivo guardado en {}".format(wav_file.name))
+
         if self.state == DialogState.WAITING_ANSWER:
-            wav_file = utils.save_to_wav(bot, update)
-            print("Archivo guardado en {}".format(wav_file.name))
-            try:
-                stt_results = self._stt.recognize(
-                    wav_file,
-                    keywords=[self.key],
-                    keywords_threshold=0.5
-                )
-                print(stt_results)
-
-                if self.key in stt_results['results'][0]['keywords_result']:
-                    self.event.set()
-                    self.state = DialogState.READY
-                else:
-                    bot.send_message(
-                        chat_id=update.message.chat_id,
-                        text="No reconocimos tu clave, por favor"\
-                             " mandala de nuevo"
-                    )
-
-            except WatsonException as e:
-                print(e)
+            self._process_password_answer(bot, update, wav_file)
+        elif self.state == DialogState.READY:
+            self._process_
         else:
             bot.send_message(
                 chat_id=update.message.chat_id,
@@ -186,3 +171,25 @@ class Dialog(object):
                      " por el momento, pero gracias por hablarme!"
             )
             return
+
+    def _process_password_answer(self, bot, update, wav_file):
+        try:
+            stt_results = self._stt.recognize(
+                wav_file,
+                keywords=[self.key],
+                keywords_threshold=0.5
+            )
+            print(stt_results)
+
+            if self.key in stt_results['results'][0]['keywords_result']:
+                self.event.set()
+                self.state = DialogState.READY
+            else:
+                bot.send_message(
+                    chat_id=update.message.chat_id,
+                    text="No reconocimos tu clave, por favor"\
+                         " mandala de nuevo"
+                )
+
+        except WatsonException as e:
+            print(e)
