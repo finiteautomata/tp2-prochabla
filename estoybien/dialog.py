@@ -46,10 +46,13 @@ class Dialog(object):
         msg = u"Hola {}, soy el chatbot de EstoyBien ¡Espero poder ayudarte! "
         msg = msg.format(self.user.first_name)
         msg += u"Por favor indica una clave usando el comando /key seguido de una palabra."
-        print(msg)
-        audio_file = self._tts.synthesize(msg)
+
+        self.send_message(bot, update, msg)
         self.state = DialogState.KEY_PROMPT
 
+
+    def send_message(self, bot, update, msg):
+        audio_file = self._tts.synthesize(msg)
         bot.send_message(
             chat_id=update.message.chat_id,
             text=msg,
@@ -66,9 +69,7 @@ class Dialog(object):
 
         if key == '':
             msg = "Tu clave es vacía. Por favor, ingresa /key seguido de la clave esperada"
-            audio_file = self._tts.synthesize(msg)
-            bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
-
+            self.send_message(bot, update, msg)
             return
 
         self.key = key
@@ -77,8 +78,7 @@ class Dialog(object):
         msg = u"Gracias. Tu clave fue guardada exitosamente."\
               u" Usa el comando /pregun para ver si estás bien"
 
-        audio_file = self._tts.synthesize(msg)
-        bot.send_voice(chat_id=update.message.chat_id, voice=audio_file)
+        self.send_message(bot, update, msg)
 
     def take_notice(self, bot, update, time):
         """/pregun recibido"""
